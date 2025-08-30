@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Guide to 3D Game Creation - By Varun Vinayak Mulay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fdfbf8; color: #3f3c36; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono&display=swap');
+        .tab-active { border-color: #a58d6f; color: #a58d6f; background-color: #f5f2ed; }
+        .tab-inactive { border-color: transparent; color: #78716c; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        code { font-family: 'Roboto Mono', monospace; background-color: #f5f2ed; padding: 0.1rem 0.3rem; border-radius: 4px; color: #846c5b; }
+        pre { background-color: #f5f2ed; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid #e7e5e4; }
+        .interactive-canvas-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 50vh; background-color: #e7e5e4; border-radius: 8px; }
+        .debug-console { background-color: #2d2a26; color: #e7e5e4; border-radius: 8px; height: 300px; padding: 1rem; overflow-y: auto; }
+        .debug-line { border-bottom: 1px solid #44403c; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .debug-error { color: #f87171; }
+        .debug-info { color: #60a5fa; }
+        .debug-warn { color: #facc15; }
+        .accordion-button.open .accordion-arrow { transform: rotate(180deg); }
+        .accordion-arrow { transition: transform 0.2s ease-in-out; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A tabbed single-page application (SPA) structure was chosen for its superior usability in a technical guide context. Developers often need to quickly reference specific topics. This non-linear, task-oriented design allows users to jump directly to "Three.js Fundamentals", "Model Importing", "Debugging", etc., without scrolling through irrelevant information. Key interactions include live 3D canvases that respond to user input (sliders, buttons), dynamically updated code snippets reflecting those changes, and interactive accordion menus for troubleshooting common errors. This approach facilitates faster learning and problem-solving compared to a static, linear document. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Core Three.js concepts (Scene, Camera, Renderer). -> Goal: Foundational understanding. -> Viz/Presentation: Interactive 3D canvas with a simple cube. -> Interaction: Buttons to change cube position/color. Adjacent code snippets highlight the corresponding functions. -> Justification: Provides immediate visual feedback, connecting code directly to its effect. -> Library/Method: Three.js (Canvas).
+        2. Report Info: Using OrbitControls. -> Goal: Teach camera manipulation and troubleshoot common issues. -> Viz/Presentation: Accordion-style FAQ. -> Interaction: User clicks on an error (e.g., "Laggy controls"). The accordion expands to show the cause and the code fix. -> Justification: An organized, interactive way to present solutions to frequent problems, preventing user frustration. -> Library/Method: HTML/CSS/JS.
+        3. Report Info: Importing 3D models (.glb). -> Goal: Demonstrate model loading and manipulation. -> Viz/Presentation: 3D canvas displaying a model with sliders for position, rotation, scale. -> Interaction: User adjusts sliders; the model and corresponding code snippets update in real-time. -> Justification: Hands-on experience is the most effective way to learn transformations. -> Library/Method: Three.js (Canvas), GLTFLoader.
+        4. Report Info: Debugging techniques. -> Goal: Simulate a debugging environment to teach error analysis. -> Viz/Presentation: A faux interactive debug console. -> Interaction: Users click on pre-populated error messages to see detailed explanations and fixes. -> Justification: Creates a safe, guided environment to learn how to interpret and solve common 3D-specific errors. -> Library/Method: HTML/CSS/JS.
+        5. Report Info: Using <model-viewer>. -> Goal: Introduce a simpler alternative for 3D display. -> Viz/Presentation: A functional <model-viewer> element next to a pro/con list. -> Interaction: User can interact with the viewer directly (rotate, zoom). -> Justification: Provides a clear comparison and helps users choose the right tool for their needs. -> Library/Method: <model-viewer> web component.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800" style="color: #654321;">Varun Mulay's Guide to 3D Web Development using AI </h1>
+            <p class="mt-2 text-lg text-gray-600" style="color: #78716c;">An interactive guide to creating 3D games and simulations with Three.js.</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="mb-8 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tab-nav">
+                <li><button class="inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="fundamentals">1. Fundamentals</button></li>
+                <li><button class="inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="controls">2. Orbital Controls</button></li>
+                <li><button class="inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="models">3. Importing Models</button></li>
+                <li><button class="inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="debugging">4. Debugging</button></li>
+                <li><button class="inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="model-viewer">5. Model Viewer</button></li>
+            </ul>
+        </nav>
+
+        <!-- Content Sections -->
+        <main id="tab-content">
+            <!-- 1. Fundamentals -->
+            <section id="fundamentals" class="content-section space-y-6">
+                <h2 class="text-3xl font-bold" style="color: #a58d6f;">Three.js Fundamentals: The Core Components</h2>
+                <p>Every Three.js application, from a simple cube to a complex game, is built upon three core components: the <code>Scene</code>, the <code>Camera</code>, and the <code>Renderer</code>. Think of it like a movie set: the Scene is the stage where all your actors (3D objects) reside, the Camera is how the audience views the stage, and the Renderer is the crew that captures the camera's view and projects it onto the screen. This section provides an interactive demonstration of these foundational elements.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <div id="fundamentals-canvas-container" class="interactive-canvas-container"></div>
+                        <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                            <button id="move-x-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 transition">Move X</button>
+                            <button id="move-y-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 transition">Move Y</button>
+                            <button id="change-color-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 transition">Change Color</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Core Logic Explained</h3>
+                        <p class="mb-4">Below is the essential JavaScript code. The interactive buttons on the left directly call functions that modify the cube's properties. See how simple commands can create dynamic changes in the 3D scene.</p>
+                        <pre><code class="language-javascript">
+// 1. Scene: The container for all objects
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
+
+// 2. Camera: Defines the viewpoint
+const camera = new THREE.PerspectiveCamera(
+    75, // Field of View
+    width / height, // Aspect Ratio
+    0.1, // Near clip plane
+    1000 // Far clip plane
+);
+camera.position.z = 5;
+
+// 3. Renderer: Renders the scene
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(width, height);
+document.body.appendChild(renderer.domElement);
+
+// Create an object (Mesh = Geometry + Material)
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshStandardMaterial({ 
+    color: 0x846c5b 
+});
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    renderer.render(scene, camera);
+}
+animate();
+
+// --- Interactive Functions ---
+function moveCubeX() {
+    cube.position.x += 0.5;
+}
+function changeCubeColor() {
+    cube.material.color.set(Math.random() * 0xffffff);
+}
+                        </code></pre>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 2. Orbital Controls -->
+            <section id="controls" class="content-section space-y-6">
+                <h2 class="text-3xl font-bold" style="color: #a58d6f;">Mastering Orbital Controls</h2>
+                <p>Static scenes are boring. <code>OrbitControls</code> is a powerful and essential tool that gives the user freedom to pan, zoom, and rotate the camera around a target. This makes your scene instantly interactive and explorable. However, its implementation has a few common pitfalls. This section explains the correct setup and provides a troubleshooting guide for the most frequent errors, ensuring a smooth user experience.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Correct Implementation</h3>
+                        <pre><code class="language-javascript">
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ... After setting up scene, camera, renderer
+
+// Initialize controls
+const controls = new OrbitControls(camera, renderer.domElement);
+
+// Optional but recommended configurations
+controls.enableDamping = true; // Adds inertia for a smoother feel
+controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false; // Restricts panning to a plane
+controls.minDistance = 2; // Min zoom
+controls.maxDistance = 10; // Max zoom
+controls.maxPolarAngle = Math.PI / 2; // Prevents looking from below ground
+
+// CRITICAL: Update controls in the animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // This is required if enableDamping is true
+    controls.update(); 
+
+    renderer.render(scene, camera);
+}
+
+animate();
+                        </code></pre>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold mb-2">Troubleshooting Common Errors</h3>
+                        <div class="accordion-item bg-white border border-gray-200 rounded-md">
+                            <button class="accordion-button flex justify-between items-center w-full p-4 text-left font-medium">
+                                <span>My controls feel laggy or don't stop immediately.</span>
+                                <span class="accordion-arrow transform transition-transform">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4">
+                                <p><strong>Cause:</strong> You have set <code>controls.enableDamping = true</code> but forgotten to call <code>controls.update()</code> inside your animation loop.</p>
+                                <p><strong>Fix:</strong> Add <code>controls.update()</code> to your <code>animate</code> function. This ensures the controls smoothly decelerate each frame.</p>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-white border border-gray-200 rounded-md">
+                            <button class="accordion-button flex justify-between items-center w-full p-4 text-left font-medium">
+                                <span>The camera zooms in/out but doesn't rotate.</span>
+                                <span class="accordion-arrow transform transition-transform">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4">
+                                <p><strong>Cause:</strong> The OrbitControls script has not loaded correctly, or you have a JavaScript error elsewhere that is stopping the script execution.</p>
+                                <p><strong>Fix:</strong> Check your browser's developer console (F12) for errors. Ensure the path to <code>OrbitControls.js</code> in your import is correct and that the Three.js library itself has loaded first.</p>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-white border border-gray-200 rounded-md">
+                            <button class="accordion-button flex justify-between items-center w-full p-4 text-left font-medium">
+                                <span>My camera can go below the "ground" plane.</span>
+                                <span class="accordion-arrow transform transition-transform">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4">
+                                <p><strong>Cause:</strong> The default polar angle allows for 360-degree vertical rotation.</p>
+                                <p><strong>Fix:</strong> Limit the vertical rotation by setting <code>controls.maxPolarAngle</code>. For example, <code>controls.maxPolarAngle = Math.PI / 2;</code> prevents the camera from going below the horizontal equator.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Importing Models -->
+            <section id="models" class="content-section space-y-6">
+                <h2 class="text-3xl font-bold" style="color: #a58d6f;">Importing 3D Models (.glb/.gltf)</h2>
+                 <p>Primitives are great for learning, but real projects use complex 3D models created in software like Blender or Maya. The most common and recommended format for the web is <code>gLTF</code> (or its binary version, <code>.glb</code>) because it's optimized for fast loading and rendering. This section demonstrates how to load a model and interactively adjust its position, rotation, and scale, which are the fundamental transformations you'll apply to any object in your scene.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <div id="models-canvas-container" class="interactive-canvas-container"></div>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-white border rounded-md">
+                            <div>
+                                <label for="model-pos-x" class="block text-sm font-medium">Position X</label>
+                                <input type="range" id="model-pos-x" min="-5" max="5" step="0.1" value="0" class="w-full">
+                            </div>
+                            <div>
+                                <label for="model-rot-y" class="block text-sm font-medium">Rotation Y</label>
+                                <input type="range" id="model-rot-y" min="-3.14" max="3.14" step="0.1" value="0" class="w-full">
+                            </div>
+                            <div>
+                                <label for="model-scale" class="block text-sm font-medium">Scale</label>
+                                <input type="range" id="model-scale" min="0.1" max="3" step="0.1" value="1.5" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Model Loader & Transformation Code</h3>
+                        <p class="mb-4">Loading models is an asynchronous operation. You use a specific loader (<code>GLTFLoader</code> here), provide a path to your model, and define a callback function that executes once the model has loaded successfully. Inside this callback, you can add the model to the scene and manipulate it.</p>
+                        <pre><code id="model-code-output" class="language-javascript">
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const loader = new GLTFLoader();
+let model;
+
+loader.load(
+    // NOTE: This is a placeholder URL. Use a real URL to a .glb model.
+    'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/models/gltf/Horse.glb',
+    function (gltf) {
+        model = gltf.scene;
+        
+        // --- Transformations applied here ---
+        model.position.set(0, -1, 0);
+        model.rotation.y = 0;
+        model.scale.set(1.5, 1.5, 1.5);
+
+        scene.add(model);
+    },
+    undefined, // onProgress callback (optional)
+    function (error) {
+        console.error(error);
+    }
+);
+
+// In your update logic (called by sliders):
+function updateModel() {
+    if (model) {
+        model.position.x = /* slider value */;
+        model.rotation.y = /* slider value */;
+        const scale = /* slider value */;
+        model.scale.set(scale, scale, scale);
+    }
+}
+                        </code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Debugging -->
+            <section id="debugging" class="content-section space-y-6">
+                <h2 class="text-3xl font-bold" style="color: #a58d6f;">A Game Developer's Debugging Toolkit</h2>
+                <p>When things go wrong in 3D, the errors can be cryptic. A blank screen is a common symptom for many different problems. Effective debugging requires understanding what the errors mean in a 3D context. This section simulates a debugging console with common errors you might encounter. Click on each error line to understand its likely cause and how to approach fixing it, turning you into a more effective problem solver.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                     <div class="space-y-4">
+                        <h3 class="text-xl font-semibold mb-2">Interactive Debug Console</h3>
+                        <div class="debug-console" id="debug-console">
+                            <div class="debug-line debug-info cursor-pointer" data-fix="fix1">▷ INFO: THREE.WebGLRenderer 164</div>
+                            <div class="debug-line debug-warn cursor-pointer" data-fix="fix2">▷ WARN: Scene has no lights. Objects may appear black.</div>
+                            <div class="debug-line debug-error cursor-pointer" data-fix="fix3">▷ ERROR: TypeError: Cannot read properties of undefined (reading 'scene')</div>
+                            <div class="debug-line debug-error cursor-pointer" data-fix="fix4">▷ ERROR: Failed to load resource: net::ERR_FILE_NOT_FOUND Horse.glb</div>
+                            <div class="debug-line debug-info cursor-pointer" data-fix="fix5">▷ INFO: Animation loop started.</div>
+                        </div>
+                     </div>
+                     <div class="p-4 bg-white border rounded-md" id="debug-fix-display">
+                        <h3 class="text-xl font-semibold mb-2">Analysis & Fix</h3>
+                        <p class="text-gray-500">Click on an error in the console to see a detailed explanation and solution here.</p>
+                     </div>
+                </div>
+                <div id="fixes" class="hidden">
+                    <div id="fix1">
+                        <h4 class="font-bold">Renderer Information</h4>
+                        <p>This is a standard startup message confirming that the Three.js renderer has been successfully initialized. It's not an error. If you don't see this, it's likely Three.js itself failed to load.</p>
+                    </div>
+                    <div id="fix2">
+                         <h4 class="font-bold">Missing Lights</h4>
+                        <p><strong>Cause:</strong> Most materials, like <code>MeshStandardMaterial</code> or <code>MeshPhongMaterial</code>, require light to be visible. Without any lights in the scene, objects using these materials will render as black.</p>
+                        <p><strong>Fix:</strong> Add at least one light to your scene. An <code>AmbientLight</code> provides basic, flat illumination, while a <code>DirectionalLight</code> simulates a distant light source like the sun.</p>
+                        <pre><code>const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);</code></pre>
+                    </div>
+                    <div id="fix3">
+                         <h4 class="font-bold">Undefined Property Error</h4>
+                        <p><strong>Cause:</strong> This typically happens when your model loader's callback function returns, but the model data (<code>gltf</code> in this case) is not what you expect. Your code tries to access <code>gltf.scene</code>, but <code>gltf</code> is undefined.</p>
+                        <p><strong>Fix:</strong> This is often a symptom of a failed model load. Check the console for an earlier error (like a 404 Not Found) that indicates the model file itself couldn't be fetched. The loader failed, so the callback received nothing.</p>
+                    </div>
+                    <div id="fix4">
+                        <h4 class="font-bold">Resource Not Found</h4>
+                        <p><strong>Cause:</strong> The path provided to the model loader (e.g., <code>GLTFLoader.load('path/to/model.glb')</code>) is incorrect. The browser cannot find the file at that location.</p>
+                        <p><strong>Fix:</strong> Double-check the file path. Is it relative or absolute? Is there a typo? Open your browser's "Network" tab in the developer tools to see the exact URL it tried to fetch and the 404 error response.</p>
+                    </div>
+                    <div id="fix5">
+                        <h4 class="font-bold">Animation Loop Started</h4>
+                        <p>This is a useful debugging message you can add yourself with <code>console.log()</code> to confirm that your <code>animate</code> function is being called. If your scene is static when it should be moving, and you don't see this message, you've likely forgotten to call <code>animate()</code> to start the loop.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 5. Model Viewer -->
+            <section id="model-viewer" class="content-section space-y-6">
+                <h2 class="text-3xl font-bold" style="color: #a58d6f;">The Easy Way: Google's &lt;model-viewer&gt;</h2>
+                <p>For some use cases, like displaying a single product or a piece of art, a full Three.js scene is overkill. Google's <code>&lt;model-viewer&gt;</code> is a web component that lets you declaratively add a 3D model to a webpage with minimal code. It's incredibly powerful for simple showcases, offering features like AR placement, animations, and camera controls right out of the box. Understanding when to use this tool can save you significant development time.</p>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Live Example</h3>
+                        <!-- Note: The script for model-viewer is added at the end of the body -->
+                        <model-viewer src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+                                      alt="A 3D model of an astronaut"
+                                      ar
+                                      auto-rotate
+                                      camera-controls
+                                      style="width: 100%; height: 400px; background-color: #f0f0f0; border-radius: 8px;">
+                        </model-viewer>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">When to Use Which?</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-lg" style="color: #846c5b;">Use <code>&lt;model-viewer&gt;</code> when:</h4>
+                                <ul class="list-disc list-inside text-gray-700">
+                                    <li>You need to display a single, pre-made 3D model.</li>
+                                    <li>The main goal is showcasing the model (e.g., e-commerce, portfolio).</li>
+                                    <li>You want easy integration with Augmented Reality (AR).</li>
+                                    <li>You prefer a declarative HTML approach over writing JavaScript.</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg" style="color: #846c5b;">Use <code>Three.js</code> when:</h4>
+                                <ul class="list-disc list-inside text-gray-700">
+                                    <li>You are building a game or a highly interactive simulation.</li>
+                                    <li>You need to manage multiple objects, physics, and complex logic.</li>
+                                    <li>You require custom shaders, post-processing effects, or particle systems.</li>
+                                    <li>You need full programmatic control over every aspect of the 3D scene.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Model Viewer Script -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // --- Tab Navigation Logic ---
+        const tabNav = document.getElementById('tab-nav');
+        const tabContent = document.getElementById('tab-content');
+        const sections = tabContent.querySelectorAll('.content-section');
+        const tabs = tabNav.querySelectorAll('button');
+
+        function switchTab(targetTabId) {
+            sections.forEach(section => {
+                section.classList.toggle('active', section.id === targetTabId);
+            });
+            tabs.forEach(tab => {
+                tab.classList.toggle('tab-active', tab.dataset.tab === targetTabId);
+                tab.classList.toggle('tab-inactive', tab.dataset.tab !== targetTabId);
+            });
+        }
+        
+        tabNav.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                switchTab(e.target.dataset.tab);
+            }
+        });
+        
+        switchTab('fundamentals');
+
+        // --- Accordion Logic ---
+        const accordions = document.querySelectorAll('.accordion-button');
+        accordions.forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                button.classList.toggle('open');
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        });
+
+        // --- Scene 1: Fundamentals ---
+        function initFundamentals() {
+            const container = document.getElementById('fundamentals-canvas-container');
+            if (!container || container.querySelector('canvas')) return;
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe7e5e4);
+
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 3;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ color: 0x846c5b, metalness: 0.3, roughness: 0.6 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            document.getElementById('move-x-btn').onclick = () => { cube.position.x = (cube.position.x + 0.5) % 3; };
+            document.getElementById('move-y-btn').onclick = () => { cube.position.y = (cube.position.y + 0.5) % 2; };
+            document.getElementById('change-color-btn').onclick = () => { cube.material.color.setHex(Math.random() * 0xffffff); };
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+        
+        // --- Scene 2: Model Importing ---
+        function initModels() {
+            const container = document.getElementById('models-canvas-container');
+            if (!container || container.querySelector('canvas')) return;
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe7e5e4);
+
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 4);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.target.set(0, 0.5, 0);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+            dirLight.position.set(5, 10, 7.5);
+            scene.add(dirLight);
+
+            const loader = new GLTFLoader();
+            let model;
+            loader.load(
+                'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/models/gltf/Horse.glb',
+                function (gltf) {
+                    model = gltf.scene;
+                    model.position.y = -1;
+                    updateModelTransform();
+                    scene.add(model);
+                },
+                undefined,
+                function (error) { console.error(error); }
+            );
+            
+            const posXSlider = document.getElementById('model-pos-x');
+            const rotYSlider = document.getElementById('model-rot-y');
+            const scaleSlider = document.getElementById('model-scale');
+
+            function updateModelTransform() {
+                if(model) {
+                    const scale = parseFloat(scaleSlider.value);
+                    model.scale.set(scale, scale, scale);
+                    model.position.x = parseFloat(posXSlider.value);
+                    model.rotation.y = parseFloat(rotYSlider.value);
+                }
+            }
+
+            posXSlider.addEventListener('input', updateModelTransform);
+            rotYSlider.addEventListener('input', updateModelTransform);
+            scaleSlider.addEventListener('input', updateModelTransform);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+        
+        // --- Debugging Logic ---
+        const debugConsole = document.getElementById('debug-console');
+        const fixDisplay = document.getElementById('debug-fix-display');
+        const fixesContent = document.getElementById('fixes');
+
+        debugConsole.addEventListener('click', (e) => {
+            const line = e.target.closest('.debug-line');
+            if (line) {
+                const fixId = line.dataset.fix;
+                const content = fixesContent.querySelector(`#${fixId}`).innerHTML;
+                fixDisplay.innerHTML = `<h3 class="text-xl font-semibold mb-2">Analysis & Fix</h3>${content}`;
+            }
+        });
+        
+        // Initializer for scenes
+        // Use a MutationObserver to initialize Three.js scenes only when they become visible.
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.classList.contains('active')) {
+                        if (target.id === 'fundamentals') initFundamentals();
+                        if (target.id === 'models') initModels();
+                    }
+                }
+            }
+        });
+
+        sections.forEach(section => {
+            observer.observe(section, { attributes: true });
+        });
+        
+        // Initial call for the first tab
+        initFundamentals();
+
+    </script>
+</body>
+</html>
